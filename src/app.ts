@@ -1,14 +1,20 @@
 require("dotenv").config();
-import express, { Response } from "express";
+import express, { Request, Response } from "express";
 import config from "config";
 import validateEnv from "./utils/validateEnv";
 import { PrismaClient } from "@prisma/client";
 import redisClient from "./utils/connectRedis";
+import bodyParser from "body-parser";
 
 validateEnv();
 
 const prisma = new PrismaClient();
 const app = express();
+app.use(bodyParser.json());
+
+export interface TypedRequestBody<T> extends Express.Request {
+  body: T;
+}
 
 async function bootstrap() {
   // Testing
@@ -18,6 +24,42 @@ async function bootstrap() {
       status: "success",
       message,
     });
+  });
+
+  app.get("/", async (_, res: Response) => {
+    res.status(200).json({
+      status: "success",
+      message: "no moro",
+    });
+  });
+
+  app.post(
+    "/api/createUser",
+    async (
+      req: TypedRequestBody<{ email: string; name: string; password: string }>,
+      res: Response
+    ) => {
+      const userData = req.body;
+      const user = await prisma.user.create({
+        data: {
+          email: userData.email,
+          name: userData.name,
+          // LOL :D
+          // TODO: add sso before anything real happens
+          password: userData.password,
+          verified: true,
+        },
+      });
+      res.status(200).json(user);
+    }
+  );
+
+  app.get("/api/users", async (_, res: Response) => {
+    const users = await prisma.user.findMany({
+      select: { name: true, createdAt: true, id: true },
+    });
+
+    return res.status(200).json(users);
   });
 
   const port = config.get<number>("port");
