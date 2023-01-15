@@ -14,7 +14,7 @@
     "start": "ts-node-dev --respawn --transpile-only --exit-child src/app.ts",
     "migrate": "npx prisma migrate dev --name user-entity && npx prisma generate",
     "push": "npx prisma db push",
-    "build": "tsc"
+    "build": "tsc -p ."
   },
   "dependencies": {
     "@prisma/client": "^4.8.1",
