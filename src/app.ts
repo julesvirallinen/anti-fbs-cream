@@ -53,6 +53,16 @@ async function bootstrap() {
       res.status(200).json(user);
     }
   );
+  app.post(
+    "/api/createApiKey",
+    async (req: TypedRequestBody<{ userId: string }>, res: Response) => {
+      const data = req.body;
+      const user = await prisma.apiKey.create({
+        data: { userId: data.userId },
+      });
+      res.status(200).json(user);
+    }
+  );
 
   app.get("/api/users", async (_, res: Response) => {
     const users = await prisma.user.findMany({

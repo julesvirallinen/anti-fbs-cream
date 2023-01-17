@@ -21,8 +21,17 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  ApiKey    ApiKey[]
 
   @@map(name: "users")
+}
+
+model ApiKey {
+  id        String   @id @unique @default(cuid())
+  apiKey    String   @unique @default(uuid())
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
 }
 
 enum RoleEnumType {
