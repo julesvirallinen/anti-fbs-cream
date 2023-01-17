@@ -19,9 +19,11 @@ model User {
   password String
   role     RoleEnumType? @default(user)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
   ApiKey    ApiKey[]
+  Event     Event[]
+  EventType EventType[]
 
   @@map(name: "users")
 }
@@ -40,14 +42,21 @@ enum RoleEnumType {
 }
 
 model Event {
-  id        String    @id @default(uuid())
-  type      EventType
-  time      DateTime  @default(now())
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id          String    @id @default(uuid())
+  type        User      @relation(fields: [userId], references: [id])
+  time        DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        EventType @relation(fields: [eventTypeId], references: [id])
+  userId      String
+  eventTypeId String
 }
 
-enum EventType {
-  took_shower
-  smoked_cigarette
+model EventType {
+  id     String @id @default(uuid())
+  name   String
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  Event Event[]
 }

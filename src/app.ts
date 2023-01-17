@@ -2,21 +2,24 @@ require("dotenv").config();
 import express, { Request, Response } from "express";
 import config from "config";
 import validateEnv from "./utils/validateEnv";
-import { PrismaClient } from "@prisma/client";
 import redisClient from "./utils/connectRedis";
 import bodyParser from "body-parser";
+import { TAuthenticated, TypedRequestBody } from "./routes/models";
+import { userRoutes } from "./routes/users";
+import { prismaClient } from "./db/prisma";
+import { authenticateKey } from "./api/authenticate";
+import { eventRoutes } from "./routes/events";
 
 validateEnv();
 
-const prisma = new PrismaClient();
+const prisma = prismaClient;
 const app = express();
 app.use(bodyParser.json());
 
-export interface TypedRequestBody<T> extends Express.Request {
-  body: T;
-}
-
 async function bootstrap() {
+  app.use("/api/users", userRoutes);
+  app.use("/api/events", authenticateKey, eventRoutes);
+
   // Testing
   app.get("/api/healthchecker", async (_, res: Response) => {
     const message = await redisClient.get("try");
@@ -31,45 +34,6 @@ async function bootstrap() {
       status: "success",
       message: "no moro",
     });
-  });
-
-  app.post(
-    "/api/createUser",
-    async (
-      req: TypedRequestBody<{ email: string; name: string; password: string }>,
-      res: Response
-    ) => {
-      const userData = req.body;
-      const user = await prisma.user.create({
-        data: {
-          email: userData.email,
-          name: userData.name,
-          // LOL :D
-          // TODO: add sso before anything real happens
-          password: userData.password,
-          verified: true,
-        },
-      });
-      res.status(200).json(user);
-    }
-  );
-  app.post(
-    "/api/createApiKey",
-    async (req: TypedRequestBody<{ userId: string }>, res: Response) => {
-      const data = req.body;
-      const user = await prisma.apiKey.create({
-        data: { userId: data.userId },
-      });
-      res.status(200).json(user);
-    }
-  );
-
-  app.get("/api/users", async (_, res: Response) => {
-    const users = await prisma.user.findMany({
-      select: { name: true, createdAt: true, id: true },
-    });
-
-    return res.status(200).json(users);
   });
 
   const port = config.get<number>("port");
