@@ -11,6 +11,16 @@ router.post(
     const data = req.body;
     if (!req.user) return res.status(400);
 
+    const userTypes = await prismaClient.eventType.findMany({
+      where: { user: req.user },
+    });
+
+    if (userTypes.find((type) => type.name === data.name)) {
+      return res
+        .status(400)
+        .send({ error: { code: 400, message: "type already exists." } });
+    }
+
     const eventType = await prismaClient.eventType.create({
       data: { userId: req.user.id, name: data.name },
     });
