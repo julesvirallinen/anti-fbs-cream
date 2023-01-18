@@ -52,5 +52,15 @@ router.post(
     res.status(200).json(event);
   }
 );
+router.get("/", async (req: TypedRequestBody<{}>, res: Response) => {
+  const data = req.body;
+  if (!req.user) return res.status(400);
+
+  const events = await prismaClient.event.findMany({
+    where: { userId: req.user.id },
+  });
+
+  res.status(200).json(events);
+});
 
 export const eventRoutes = router;
